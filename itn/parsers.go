@@ -73,7 +73,6 @@ func (w *WordStreamValueParser) isCoefAppliable(coef int) bool {
 }
 
 func (w *WordStreamValueParser) push(word string, lookAhead string) bool {
-
 	log.Printf("+ WordStreamValueParser.push.word %s [ahead] %s [lastWord] %s", word, lookAhead, w.lastWord)
 
 	if word == "" {
@@ -234,7 +233,6 @@ func (w *WordToDigitParser) isAlone(word string, nextWord string) bool {
 }
 
 func (w *WordToDigitParser) push(word string, lookAhead string) bool {
-
 	if w.Closed || w.isAlone(word, lookAhead) {
 		log.Printf(">> WordToDigitParser.push.condition 0:[word]%s [ahead] %s [lastWord] %s", word, lookAhead, w.lastWord)
 		w.lastWord = word

@@ -50,41 +50,52 @@ func TestAlpha2Digit(t *testing.T) {
 		{
 			input:  "treinta y cuatro = treinta cuatro",
 			output: "34 = 34",
-		}, {
+		},
+		{
 			input:  "mas treinta y tres nueve sesenta cero seis doce veintiuno",
 			output: "+33 9 60 06 12 21",
 		},
 		{
 			input:  "cero nueve sesenta cero seis doce veintiuno",
 			output: "09 60 06 12 21",
-		}, {
+		},
+		{
 			input:  "cincuenta sesenta treinta y once",
 			output: "50 60 30 y 11",
-		}, {
+		},
+		{
 			input:  "trece mil cero noventa",
 			output: "13000 090",
-		}, {
+		},
+		{
 			input:  "cero",
 			output: "0",
-		}, {
+		},
+		{
 			input:  "doce coma noventa y nueve, ciento veinte coma cero cinco, uno coma doscientos treinta y seis, uno coma dos tres seis.",
 			output: "12.99, 120.05, 1.236, 1.2 3 6.",
-		}, {
+		},
+		{
 			input:  "coma quince",
 			output: "0.15",
-		}, {
+		},
+		{
 			input:  "Tenemos mas veinte grados dentro y menos quince fuera.",
 			output: "Tenemos +20 grados dentro y -15 fuera.",
-		}, {
+		},
+		{
 			input:  "Un momento por favor! treinta y un gatos. Uno dos tres cuatro!",
 			output: "Un momento por favor! 31 gatos. 1 2 3 4!",
-		}, {
+		},
+		{
 			input:  "Ni uno. Uno uno. Treinta y uno",
 			output: "Ni uno. 1 1. 31",
-		}, {
+		},
+		{
 			input:  "un millon",
 			output: "1000000",
-		}, {
+		},
+		{
 			input:  "un millón",
 			output: "1000000",
 		},

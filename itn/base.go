@@ -28,7 +28,6 @@ type Language struct {
 }
 
 func NewLanguageES() *Language {
-
 	l := &Language{
 		Multipliers: map[string]int{
 			"mil":      1000,
