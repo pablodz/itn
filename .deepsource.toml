@@ -1,10 +1,9 @@
 version = 1
 
+test_patterns = ["**/*_test.go"]
+
 [[analyzers]]
 name = "go"
 
   [analyzers.meta]
-  import_root = "github.com/pablodz/itn"
-
-[[transformers]]
-name = "gofumpt"
+  import_root = "github.com/sopro-dev/sopro-core"
