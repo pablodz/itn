@@ -48,7 +48,6 @@ func NewLanguageES() *Language {
 			"nueve":  9,
 			"un":     1, // optional
 			"una":    1, // optional
-
 		},
 		STens: map[string]int{
 			"diez":         10,
@@ -73,6 +72,8 @@ func NewLanguageES() *Language {
 			"veintinueve":  29,
 			"veintitrés":   23, // with accent
 			"veintidós":    22, // with accent
+			"dieciséis":    16, // with typo
+			"veintiséis":   26, // with typo
 		},
 		MTens: map[string]int{
 			"treinta":   30,
@@ -131,7 +132,7 @@ func NewLanguageES() *Language {
 		And: "y",
 		NeverIfAlone: []string{
 			"un",
-			"uno",
+			// "uno", // Telephony first
 			"una",
 		},
 		Relaxed: map[string]RelaxTuple{},

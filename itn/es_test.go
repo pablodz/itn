@@ -36,6 +36,14 @@ func TestAlpha2Digit(t *testing.T) {
 			output: "1 2 3 4 20 15",
 		},
 		{
+			input:  "uno cero treinta y siete", // Telephony first
+			output: "1 037",                    // Telephony first
+		},
+		{
+			input:  "veintitrés dos cuatro", // Telephony first
+			output: "23 2 4",                // Telephony first
+		},
+		{
 			input:  "veintiuno, treinta y uno.",
 			output: "21, 31.",
 		},
@@ -88,8 +96,8 @@ func TestAlpha2Digit(t *testing.T) {
 			output: "Un momento por favor! 31 gatos. 1 2 3 4!",
 		},
 		{
-			input:  "Ni uno. Uno uno. Treinta y uno",
-			output: "Ni uno. 1 1. 31",
+			input:  "Ni uno. Uno uno. Treinta y uno", // Telephony first
+			output: "Ni 1. 1 1. 31",                  // Telephony first
 		},
 		{
 			input:  "un millon",
