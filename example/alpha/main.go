@@ -5,9 +5,9 @@ import (
 )
 
 func main() {
-	processor := itn.NewSpanishLanguage()
+	processor := itn.NewLanguageES()
 	new_string := processor.Alpha2Digit(
-		"uno dos tres cuatro siete siete noventa 89",
+		"uno quince",
 		false,
 		true,
 		3,

@@ -11,15 +11,12 @@ type WordStreamValueParser struct {
 	n000Val  int
 	grpVal   int
 	lastWord string
-	lang     *Language
+	lang     Language
 	relaxed  bool
 }
 
-func NewWordStreamValueParser(lang *Language, relaxed bool) *WordStreamValueParser {
-	return &WordStreamValueParser{
-		Skip:    "",
-		n000Val: 0,
-		grpVal:  0,
+func NewWordStreamValueParser(lang Language, relaxed bool) WordStreamValueParser {
+	return WordStreamValueParser{
 		lang:    lang,
 		relaxed: relaxed,
 	}
@@ -67,23 +64,32 @@ func (w *WordStreamValueParser) isCoefAppliable(coef int) bool {
 }
 
 func (w *WordStreamValueParser) push(word string, lookAhead string) bool {
+
+	log.Printf("- WordStreamValueParser.push.word %s [ahead] %s", word, lookAhead)
+
 	if word == "" {
+		log.Printf(">> WordStreamValueParser.push.condition 0: [word]%s [ahead] %s", word, lookAhead)
 		return false
 	}
 
 	if word == w.lang.And && contains(w.lang.AndNums, lookAhead) {
+		log.Printf(">> WordStreamValueParser.push.condition 1: [word]%s [ahead] %s", word, lookAhead)
 		return true
 	}
 
 	word = w.lang.Normalize(word)
 	if !containsKey(w.lang.Numbers, word) {
+		log.Printf(">> WordStreamValueParser.push.condition 2: [word]%s [ahead] %s", word, lookAhead)
 		return false
 	}
 
-	relaxed := w.lang.Relaxed
+	RELAXED := w.lang.Relaxed
 	if containsKey(w.lang.Multipliers, word) {
+		log.Printf(">> WordStreamValueParser.push.condition 3: [word]%s [ahead] %s", word, lookAhead)
 		coef := w.lang.Multipliers[word]
+		log.Printf(">>> WordStreamValueParser.push.coef %d", coef)
 		if !w.isCoefAppliable(coef) {
+			log.Printf(">> WordStreamValueParser.push.condition 3.1: [word]%s [ahead] %s", word, lookAhead)
 			return false
 		}
 
@@ -93,6 +99,7 @@ func (w *WordStreamValueParser) push(word string, lookAhead string) bool {
 			}
 			w.grpVal = w.grpVal * coef
 			w.lastWord = ""
+			log.Printf(">> WordStreamValueParser.push.condition 3.2: [word]%s [ahead] %s", word, lookAhead)
 			return true
 		}
 		if coef < w.n000Val {
@@ -108,37 +115,45 @@ func (w *WordStreamValueParser) push(word string, lookAhead string) bool {
 		}
 		w.grpVal = 0
 		w.lastWord = ""
-
-	} else if w.relaxed && containsKey(relaxed, word) && lookAhead != "" && strings.HasPrefix(relaxed[word].Zero, lookAhead) && w.groupExpects(relaxed[word].One, false) {
-		w.Skip = relaxed[word].Zero
-		w.grpVal = w.grpVal + w.lang.Numbers[relaxed[word].One]
+	} else if w.relaxed && containsKey(RELAXED, word) && lookAhead != "" && strings.HasPrefix(RELAXED[word].Zero, lookAhead) && w.groupExpects(RELAXED[word].One, false) {
+		log.Printf(">> WordStreamValueParser.push.condition 4: [word]%s [ahead] %s", word, lookAhead)
+		w.Skip = RELAXED[word].Zero
+		w.grpVal = w.grpVal + w.lang.Numbers[RELAXED[word].One]
 	} else if w.Skip != "" && strings.HasPrefix(w.Skip, word) {
+		log.Printf(">> WordStreamValueParser.push.condition 5: [word]%s [ahead] %s", word, lookAhead)
 		w.Skip = ""
 	} else if w.groupExpects(word, true) {
+		log.Printf(">> WordStreamValueParser.push.condition 6: [word]%s [ahead] %s", word, lookAhead)
 		if containsKey(w.lang.Hundred, word) {
+			log.Printf(">> WordStreamValueParser.push.condition 6.1: [word]%s [ahead] %s", word, lookAhead)
 			if w.grpVal != 0 {
 				w.grpVal = 100 * w.grpVal
 			} else {
 				w.grpVal = w.lang.Hundred[word]
 			}
 		} else if containsKey(w.lang.MHundreds, word) {
+			log.Printf(">> WordStreamValueParser.push.condition 6.2: [word]%s [ahead] %s", word, lookAhead)
 			w.grpVal = w.lang.MHundreds[word]
 		} else {
+			log.Printf(">> WordStreamValueParser.push.condition 6.3: [word]%s [ahead] %s", word, lookAhead)
 			w.grpVal = w.grpVal + w.lang.Numbers[word]
+			log.Printf(">>> WordStreamValueParser.push.grpVal %d", w.grpVal)
 		}
 	} else {
+		log.Printf(">> WordStreamValueParser.push.condition 7: [word]%s [ahead] %s", word, lookAhead)
 		w.Skip = ""
 		return false
 	}
 
+	log.Printf(">> WordStreamValueParser.push.condition 8: [word]%s [ahead] %s", word, lookAhead)
 	return true
 }
 
 type WordToDigitParser struct {
 	Lang             *Language
 	value            []string
-	IntBuilder       *WordStreamValueParser
-	FracBuilder      *WordStreamValueParser
+	IntBuilder       WordStreamValueParser
+	FracBuilder      WordStreamValueParser
 	Signed           bool
 	InFrac           bool
 	Closed           bool
@@ -151,8 +166,8 @@ func NewWordToDigitParser(lang *Language, relaxed bool, signed bool, ordinalThre
 	return &WordToDigitParser{
 		Lang:             lang,
 		value:            []string{},
-		IntBuilder:       NewWordStreamValueParser(lang, relaxed),
-		FracBuilder:      NewWordStreamValueParser(lang, relaxed),
+		IntBuilder:       NewWordStreamValueParser(*lang, relaxed),
+		FracBuilder:      NewWordStreamValueParser(*lang, relaxed),
 		Signed:           signed,
 		InFrac:           false,
 		Closed:           false,
@@ -178,7 +193,7 @@ func (w *WordToDigitParser) close() {
 }
 
 func (w *WordToDigitParser) atStartOfSeq() bool {
-	return (w.InFrac && w.FracBuilder.GetValue() == 0 || !w.InFrac && w.IntBuilder.GetValue() == 0)
+	return w.InFrac && w.FracBuilder.GetValue() == 0 || !w.InFrac && w.IntBuilder.GetValue() == 0
 }
 
 func (w *WordToDigitParser) atStart() bool {
@@ -186,9 +201,12 @@ func (w *WordToDigitParser) atStart() bool {
 }
 
 func (w *WordToDigitParser) the_push(word string, lookAhead string) bool {
-	builder := w.IntBuilder
+	builder := WordStreamValueParser{}
+	log.Printf(">> inFrac %v word %s lookAhead %s", w.InFrac, word, lookAhead)
 	if w.InFrac {
 		builder = w.FracBuilder
+	} else {
+		builder = w.IntBuilder
 	}
 	return builder.push(word, lookAhead)
 }
@@ -198,21 +216,23 @@ func (w *WordToDigitParser) isAlone(word string, nextWord string) bool {
 }
 
 func (w *WordToDigitParser) push(word string, lookAhead string) bool {
+
 	if w.Closed || w.isAlone(word, lookAhead) {
+		log.Printf(">> WordToDigitParser.push.condition 0:[word]%s [ahead] %s", word, lookAhead)
 		w.LastWord = word
 		return false
 	}
 
 	if w.Signed && containsKey(w.Lang.Sign, word) && containsKey(w.Lang.Numbers, lookAhead) && w.atStart() {
-		log.Printf("> condition 1: word %s ahead %s", word, lookAhead)
+		log.Printf(">> WordToDigitParser.push.condition 1:[word]%s [ahead] %s", word, lookAhead)
 		w.value = append(w.value, w.Lang.Sign[word])
 	} else if contains(w.Lang.Zero, word) && w.atStartOfSeq() && lookAhead != "" && strings.Contains(w.Lang.DecimalSep, lookAhead) {
-		log.Printf("> condition 2: word %s ahead %s", word, lookAhead)
+		log.Printf(">> WordToDigitParser.push.condition 2:[word]%s [ahead] %s", word, lookAhead)
 	} else if contains(w.Lang.Zero, word) && w.atStartOfSeq() {
-		log.Printf("> condition 3: word %s ahead %s", word, lookAhead)
+		log.Printf(">> WordToDigitParser.push.condition 3:[word]%s [ahead] %s", word, lookAhead)
 		w.value = append(w.value, "0")
 	} else if w.the_push(w.Lang.Ord2Card(word), lookAhead) {
-		log.Printf("> condition 4: word %s ahead %s", word, lookAhead)
+		log.Printf(">> WordToDigitParser.push.condition 4:[word]%s [ahead] %s", word, lookAhead)
 		value2Add := word
 		if w.IntBuilder.GetValue() > w.OrdinalThreshold {
 			digits := w.IntBuilder.GetValue()
@@ -224,14 +244,14 @@ func (w *WordToDigitParser) push(word string, lookAhead string) bool {
 		w.value = append(w.value, value2Add)
 		w.Closed = true
 	} else if word == w.Lang.DecimalSep || contains(strings.Split(w.Lang.DecimalSep, ","), word) && (containsKey(w.Lang.Numbers, lookAhead) || contains(w.Lang.Zero, lookAhead)) && !w.InFrac {
-		log.Printf("> condition 5: word %s ahead %s", word, lookAhead)
+		log.Printf(">> WordToDigitParser.push.condition 5:[word]%s [ahead] %s", word, lookAhead)
 		if w.GetValue() == "" {
 			w.value = append(w.value, fmt.Sprint(w.IntBuilder.GetValue()))
 		}
 		w.value = append(w.value, w.Lang.DecimalSYM)
 		w.InFrac = true
 	} else if !w.the_push(word, lookAhead) {
-		log.Printf("> condition 6: word %s ahead %s", word, lookAhead)
+		log.Printf(">> WordToDigitParser.push.condition 6:[word] %s [ahead] %s", word, lookAhead)
 		if w.Open {
 			w.close()
 		}
@@ -239,7 +259,7 @@ func (w *WordToDigitParser) push(word string, lookAhead string) bool {
 		return false
 	}
 
-	log.Printf("word %s ahead %s", word, lookAhead)
+	log.Printf(">> WordToDigitParser.push.condition 7:[word] %s [ahead] %s", word, lookAhead)
 
 	w.Open = true
 	w.LastWord = word

@@ -91,7 +91,7 @@ func TestAlpha2Digit(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		processor := NewSpanishLanguage()
+		processor := NewLanguageES()
 		new_string := processor.Alpha2Digit(tt.input, false, true, 3)
 		if new_string != tt.output {
 			t.Errorf("❌ Expected <%s>, got <%s>", tt.output, new_string)

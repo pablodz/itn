@@ -1,6 +1,7 @@
 package itn
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -26,40 +27,145 @@ type Language struct {
 	Simplify_check_coef_appliable bool
 }
 
+func NewLanguageES() *Language {
+
+	l := &Language{
+		Multipliers: map[string]int{
+			"mil":      1000,
+			"miles":    1000,
+			"millon":   1000000,
+			"millón":   1000000,
+			"millones": 1000000,
+		},
+		Units: map[string]int{
+			"uno":    1,
+			"dos":    2,
+			"tres":   3,
+			"cuatro": 4,
+			"cinco":  5,
+			"seis":   6,
+			"siete":  7,
+			"ocho":   8,
+			"nueve":  9,
+			"un":     1, // optional
+			"una":    1, // optional
+
+		},
+		STens: map[string]int{
+			"diez":         10,
+			"once":         11,
+			"doce":         12,
+			"trece":        13,
+			"catorce":      14,
+			"quince":       15,
+			"dieciseis":    16,
+			"diecisiete":   17,
+			"dieciocho":    18,
+			"diecinueve":   19,
+			"veinte":       20,
+			"veintiuno":    21,
+			"veintidos":    22,
+			"veintitres":   23,
+			"veinticuatro": 24,
+			"veinticinco":  25,
+			"veintiseis":   26,
+			"veintisiete":  27,
+			"veintiocho":   28,
+			"veintinueve":  29,
+			"veintitrés":   23, // with accent
+			"veintidós":    22, // with accent
+		},
+		MTens: map[string]int{
+			"treinta":   30,
+			"cuarenta":  40,
+			"cincuenta": 50,
+			"sesenta":   60,
+			"setenta":   70,
+			"ochenta":   80,
+			"noventa":   90,
+		},
+		MTensWSTens: []string{},
+		Hundred: map[string]int{
+			"cien":          100,
+			"ciento":        100,
+			"cienta":        100,
+			"doscientos":    200,
+			"trescientos":   300,
+			"cuatrocientos": 400,
+			"quinientos":    500,
+			"seiscientos":   600,
+			"setecientos":   700,
+			"ochocientos":   800,
+			"novecientos":   900,
+			"doscientas":    200, // with feminine
+			"trescientas":   300, // with feminine
+			"cuatrocientas": 400, // with feminine
+			"quinientas":    500, // with feminine
+			"seiscientas":   600, // with feminine
+			"setecientas":   700, // with feminine
+			"ochocientas":   800, // with feminine
+			"novecientas":   900, // with feminine
+		},
+		Sign: map[string]string{
+			"mas":   "+",
+			"menos": "-",
+		},
+		Zero: []string{
+			"cero",
+		},
+		DecimalSep: "coma",
+		DecimalSYM: ".",
+		AndNums: []string{
+			"un",
+			"uno",
+			"una",
+			"dos",
+			"tres",
+			"cuatro",
+			"cinco",
+			"seis",
+			"siete",
+			"ocho",
+			"nueve",
+		},
+
+		And: "y",
+		NeverIfAlone: []string{
+			"un",
+			"uno",
+			"una",
+		},
+		Relaxed: map[string]RelaxTuple{},
+	}
+
+	// deep copy from l.multipliers
+	l.Numbers = map[string]int{
+		"mil":      1000,
+		"miles":    1000,
+		"millon":   1000000,
+		"millón":   1000000,
+		"millones": 1000000,
+	}
+
+	for k, v := range l.Units {
+		l.Numbers[k] = v
+	}
+	for k, v := range l.STens {
+		l.Numbers[k] = v
+	}
+	for k, v := range l.MTens {
+		l.Numbers[k] = v
+	}
+	for k, v := range l.Hundred {
+		l.Numbers[k] = v
+	}
+
+	return l
+}
+
 type RelaxTuple struct {
 	Zero string
 	One  string
-}
-
-func (lg *Language) NotNumericWord(word string) bool {
-	isEmpty := false
-	if word == "" {
-		isEmpty = true
-	}
-
-	isDecimalSep := false
-	if word == lg.DecimalSep {
-		isDecimalSep = true
-	}
-
-	isNotNumber := false
-	if _, ok := lg.Numbers[word]; !ok {
-		isNotNumber = true
-	}
-
-	isNotZero := false
-	for _, zero := range lg.Zero {
-		if word == zero {
-			isNotZero = true
-			break
-		}
-	}
-
-	return isEmpty || isDecimalSep && isNotNumber && isNotZero
-}
-
-func (lg *Language) Normalize(word string) string {
-	return word
 }
 
 func (lg *Language) Ord2Card(word string) string {
@@ -67,7 +173,18 @@ func (lg *Language) Ord2Card(word string) string {
 }
 
 func (lg *Language) NumOrd(digits string, originalWord string) string {
-	return ""
+	if strings.HasSuffix(originalWord, "o") {
+		return fmt.Sprintf("%sº", digits)
+	}
+	return fmt.Sprintf("%sª", digits)
+}
+
+func (lg *Language) Normalize(word string) string {
+	return word
+}
+
+func (lg *Language) NotNumericWord(word string) bool {
+	return word == "" || word != lg.DecimalSep && !containsKey(lg.Numbers, word) && !contains(lg.Zero, word)
 }
 
 var WORDSEP = regexp.MustCompile(`\s*[\.,;\(\)…\[\]:!\?]+\s*|\n`)
@@ -105,15 +222,15 @@ func lookAhead(tokens []string) []LookAhead {
 	return lookAheads
 }
 
-func (lg *SpanishLanguage) Alpha2Digit(text string, relaxed bool, signed bool, ordinalThreshold int) string {
+func (lg *Language) Alpha2Digit(text string, relaxed bool, signed bool, ordinalThreshold int) string {
 	segments := WORDSEP.Split(text, -1)
-	for i, segment := range segments {
-		log.Println("[segment]", i, segment)
-	}
+	// for i, segment := range segments {
+	// 	log.Println("[segment]", i, segment)
+	// }
 	punct := WORDSEP.FindAllString(text, -1)
-	for i, p := range punct {
-		log.Println("[punct]", i, p)
-	}
+	// for i, p := range punct {
+	// 	log.Println("[punct]", i, p)
+	// }
 
 	if len(punct) < len(segments) {
 		punct = append(punct, "")
@@ -121,44 +238,50 @@ func (lg *SpanishLanguage) Alpha2Digit(text string, relaxed bool, signed bool, o
 
 	segmentAndPuncts := []segmentAndPunct{}
 	for i, segment := range segments {
-		segmentAndPuncts = append(segmentAndPuncts, segmentAndPunct{segment, punct[i]})
+		segmentAndPuncts = append(segmentAndPuncts,
+			segmentAndPunct{
+				segment,
+				punct[i],
+			},
+		)
 	}
 
 	outSegments := []string{}
 	for _, sp := range segmentAndPuncts {
 		tokens := strings.Split(sp.segment, " ")
-		log.Printf("[sp.segment] %s [len]%d", sp.segment, len(tokens))
+		log.Printf("tokens %v", tokens)
 
-		numBuilder := NewWordToDigitParser(lg.Language, relaxed, signed, ordinalThreshold, "")
+		numBuilder := NewWordToDigitParser(lg, relaxed, signed, ordinalThreshold, "")
 		lastWord := ""
 		inNumber := false
 		outTokens := []string{}
 		for _, couple := range lookAhead(tokens) {
 
-			log.Printf("[word] %s [next] %s", couple.Word, couple.Ahead)
+			log.Printf("✅ [word] %s [ahead] %s", couple.Word, couple.Ahead)
 
-			if numBuilder.push(strings.ToLower(couple.Word), strings.ToLower(couple.Ahead)) {
-				log.Printf("condition 1: word %s ahead %s", couple.Word, couple.Ahead)
+			pushed := numBuilder.push(strings.ToLower(couple.Word), strings.ToLower(couple.Ahead))
+			if pushed {
+				log.Printf("> condition 1: word %s ahead %s", couple.Word, couple.Ahead)
 				inNumber = true
 			} else if inNumber {
-				log.Printf("condition 2: word %s ahead %s", couple.Word, couple.Ahead)
-				log.Printf("numBuilder.value() >>>>>>>> %s", numBuilder.GetValue())
+				log.Printf("> condition 2: word %s ahead %s", couple.Word, couple.Ahead)
 				outTokens = append(outTokens, numBuilder.GetValue())
-				log.Printf("relaxed %v signed %v ordinalThreshold %d lastWord %s", relaxed, signed, ordinalThreshold, lastWord)
-				numBuilder = NewWordToDigitParser(lg.Language, relaxed, signed, ordinalThreshold, lastWord)
+				numBuilder = NewWordToDigitParser(lg, relaxed, signed, ordinalThreshold, lastWord)
 				inNumber = numBuilder.push(strings.ToLower(couple.Word), strings.ToLower(couple.Ahead))
-				log.Printf("inNumber %v", inNumber)
 			}
 
 			if !inNumber {
-				log.Printf("condition 3: word %s ahead %s", couple.Word, couple.Ahead)
+				log.Printf("> condition 3: word %s ahead %s", couple.Word, couple.Ahead)
 				outTokens = append(outTokens, couple.Word)
 			}
+
 			lastWord = strings.ToLower(couple.Word)
+
 		}
+
+		log.Printf("---")
 		numBuilder.close()
 		if numBuilder.GetValue() != "" {
-			log.Printf("numBuilder.value() %s", numBuilder.GetValue())
 			outTokens = append(outTokens, numBuilder.GetValue())
 		}
 
