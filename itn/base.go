@@ -222,7 +222,7 @@ func lookAhead(tokens []string) []LookAhead {
 	return lookAheads
 }
 
-func (lg *Language) Alpha2Digit(text string, relaxed bool, signed bool, ordinalThreshold int) string {
+func (lg Language) Alpha2Digit(text string, relaxed bool, signed bool, ordinalThreshold int) string {
 	segments := WORDSEP.Split(text, -1)
 	// for i, segment := range segments {
 	// 	log.Println("[segment]", i, segment)
@@ -277,6 +277,8 @@ func (lg *Language) Alpha2Digit(text string, relaxed bool, signed bool, ordinalT
 
 			lastWord = strings.ToLower(couple.Word)
 
+			log.Printf("... lastWord %s, inNumber %t, outTokens %v", lastWord, inNumber, outTokens)
+
 		}
 
 		log.Printf("---")
@@ -287,6 +289,7 @@ func (lg *Language) Alpha2Digit(text string, relaxed bool, signed bool, ordinalT
 
 		outSegments = append(outSegments, strings.Join(outTokens, " "))
 		outSegments = append(outSegments, sp.punct)
+
 	}
 	text = strings.Join(outSegments, "")
 

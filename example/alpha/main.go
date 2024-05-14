@@ -7,7 +7,7 @@ import (
 func main() {
 	processor := itn.NewLanguageES()
 	new_string := processor.Alpha2Digit(
-		"uno quince",
+		"uno dos quince",
 		false,
 		true,
 		3,
