@@ -2,7 +2,6 @@ package itn
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 )
@@ -249,7 +248,7 @@ func (lg Language) Alpha2Digit(text string, relaxed bool, signed bool, ordinalTh
 	outSegments := []string{}
 	for _, sp := range segmentAndPuncts {
 		tokens := strings.Split(sp.segment, " ")
-		log.Printf("tokens %v", tokens)
+		logPrintf("tokens %v", tokens)
 
 		numBuilder := NewWordToDigitParser(lg, relaxed, signed, ordinalThreshold, "")
 		lastWord := ""
@@ -257,31 +256,31 @@ func (lg Language) Alpha2Digit(text string, relaxed bool, signed bool, ordinalTh
 		outTokens := []string{}
 		for _, couple := range lookAhead(tokens) {
 
-			log.Printf("✅ [word] %s [ahead] %s", couple.Word, couple.Ahead)
+			logPrintf("✅ [word] %s [ahead] %s", couple.Word, couple.Ahead)
 
 			pushed := numBuilder.push(strings.ToLower(couple.Word), strings.ToLower(couple.Ahead))
 			if pushed {
-				log.Printf("> condition 1: word %s ahead %s", couple.Word, couple.Ahead)
+				logPrintf("> condition 1: word %s ahead %s", couple.Word, couple.Ahead)
 				inNumber = true
 			} else if inNumber {
-				log.Printf("> condition 2: word %s ahead %s", couple.Word, couple.Ahead)
+				logPrintf("> condition 2: word %s ahead %s", couple.Word, couple.Ahead)
 				outTokens = append(outTokens, numBuilder.GetValue())
 				numBuilder = NewWordToDigitParser(lg, relaxed, signed, ordinalThreshold, lastWord)
 				inNumber = numBuilder.push(strings.ToLower(couple.Word), strings.ToLower(couple.Ahead))
 			}
 
 			if !inNumber {
-				log.Printf("> condition 3: word %s ahead %s", couple.Word, couple.Ahead)
+				logPrintf("> condition 3: word %s ahead %s", couple.Word, couple.Ahead)
 				outTokens = append(outTokens, couple.Word)
 			}
 
 			lastWord = strings.ToLower(couple.Word)
 
-			log.Printf("... lastWord %s, inNumber %t, outTokens %v", lastWord, inNumber, outTokens)
+			logPrintf("... lastWord %s, inNumber %t, outTokens %v", lastWord, inNumber, outTokens)
 
 		}
 
-		log.Printf("---")
+		logPrintf("---")
 		numBuilder.close()
 		if numBuilder.GetValue() != "" {
 			outTokens = append(outTokens, numBuilder.GetValue())
