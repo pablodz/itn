@@ -7,6 +7,7 @@ import (
 )
 
 type Language struct {
+	LangCode                      LanguageCode
 	Multipliers                   map[string]int
 	Units                         map[string]int
 	STens                         map[string]int
@@ -23,143 +24,9 @@ type Language struct {
 	And                           string
 	NeverIfAlone                  []string
 	Relaxed                       map[string]RelaxTuple
-	Simplify_check_coef_appliable bool
-}
-
-func NewLanguageES() *Language {
-	l := &Language{
-		Multipliers: map[string]int{
-			"mil":      1000,
-			"miles":    1000,
-			"millon":   1000000,
-			"millón":   1000000,
-			"millones": 1000000,
-		},
-		Units: map[string]int{
-			"uno":    1,
-			"dos":    2,
-			"tres":   3,
-			"cuatro": 4,
-			"cinco":  5,
-			"seis":   6,
-			"siete":  7,
-			"ocho":   8,
-			"nueve":  9,
-			"un":     1, // optional
-			"una":    1, // optional
-		},
-		STens: map[string]int{
-			"diez":         10,
-			"once":         11,
-			"doce":         12,
-			"trece":        13,
-			"catorce":      14,
-			"quince":       15,
-			"dieciseis":    16,
-			"diecisiete":   17,
-			"dieciocho":    18,
-			"diecinueve":   19,
-			"veinte":       20,
-			"veintiuno":    21,
-			"veintidos":    22,
-			"veintitres":   23,
-			"veinticuatro": 24,
-			"veinticinco":  25,
-			"veintiseis":   26,
-			"veintisiete":  27,
-			"veintiocho":   28,
-			"veintinueve":  29,
-			"veintitrés":   23, // with accent
-			"veintidós":    22, // with accent
-			"dieciséis":    16, // with typo
-			"veintiséis":   26, // with typo
-		},
-		MTens: map[string]int{
-			"treinta":   30,
-			"cuarenta":  40,
-			"cincuenta": 50,
-			"sesenta":   60,
-			"setenta":   70,
-			"ochenta":   80,
-			"noventa":   90,
-		},
-		MTensWSTens: []string{},
-		Hundred: map[string]int{
-			"cien":          100,
-			"ciento":        100,
-			"cienta":        100,
-			"doscientos":    200,
-			"trescientos":   300,
-			"cuatrocientos": 400,
-			"quinientos":    500,
-			"seiscientos":   600,
-			"setecientos":   700,
-			"ochocientos":   800,
-			"novecientos":   900,
-			"doscientas":    200, // with feminine
-			"trescientas":   300, // with feminine
-			"cuatrocientas": 400, // with feminine
-			"quinientas":    500, // with feminine
-			"seiscientas":   600, // with feminine
-			"setecientas":   700, // with feminine
-			"ochocientas":   800, // with feminine
-			"novecientas":   900, // with feminine
-		},
-		Sign: map[string]string{
-			"mas":   "+",
-			"menos": "-",
-		},
-		Zero: []string{
-			"cero",
-		},
-		DecimalSep: "coma",
-		DecimalSYM: ".",
-		AndNums: []string{
-			"un",
-			"uno",
-			"una",
-			"dos",
-			"tres",
-			"cuatro",
-			"cinco",
-			"seis",
-			"siete",
-			"ocho",
-			"nueve",
-		},
-
-		And: "y",
-		NeverIfAlone: []string{
-			"un",
-			// "uno", // Telephony first
-			"una",
-		},
-		Relaxed: map[string]RelaxTuple{},
-	}
-
-	// deep copy from l.multipliers
-	l.Numbers = map[string]int{
-		"mil":      1000,
-		"miles":    1000,
-		"millon":   1000000,
-		"millón":   1000000,
-		"millones": 1000000,
-	}
-
-	for k, v := range l.Units {
-		l.Numbers[k] = v
-	}
-	for k, v := range l.STens {
-		l.Numbers[k] = v
-	}
-	for k, v := range l.MTens {
-		l.Numbers[k] = v
-	}
-	for k, v := range l.Hundred {
-		l.Numbers[k] = v
-	}
-
-	return l
+	Simplify_check_coef_appliable bool              // Optional
+	RadMap                        map[string]string // Optional
+	Composites                    map[string]int    // Optional
 }
 
 type RelaxTuple struct {
@@ -168,18 +35,85 @@ type RelaxTuple struct {
 }
 
 func (lg *Language) Ord2Card(word string) string {
-	return ""
+	switch lg.LangCode {
+	case English:
+		logPrintf(">>>> Ord2Card.0 %s", word)
+		plurSuff := strings.HasSuffix(word, "ths")
+		singSuff := strings.HasSuffix(word, "th")
+		source := ""
+		if !(plurSuff || singSuff) {
+			if strings.HasSuffix(word, "first") {
+				source = strings.ReplaceAll(word, "first", "one")
+			} else if strings.HasSuffix(word, "second") {
+				source = strings.ReplaceAll(word, "second", "two")
+			} else if strings.HasSuffix(word, "third") {
+				source = strings.ReplaceAll(word, "third", "three")
+			} else {
+				logPrintf(">>>> Ord2Card.1 %s", word)
+				return ""
+			}
+		} else {
+			if plurSuff {
+				source = word[:len(word)-3]
+			} else {
+				source = word[:len(word)-2]
+			}
+		}
+
+		if containsKey(lg.RadMap, source) {
+			source = lg.RadMap[source]
+		} else if strings.HasSuffix(source, "ie") {
+			source = source[:len(source)-2] + "y"
+		} else if strings.HasSuffix(source, "fif") {
+			source = source[:len(source)-1] + "ve"
+		} else if strings.HasSuffix(source, "eigh") {
+			source = source + "t"
+		} else if strings.HasSuffix(source, "nin") {
+			source = source + "e"
+		}
+
+		if !containsKey(lg.Numbers, source) {
+			logPrintf(">>>> Ord2Card.2 %s", source)
+			return ""
+		}
+
+		logPrintf(">>>> Ord2Card.3 %s", source)
+		return source
+	case Spanish:
+		return ""
+	default:
+		return ""
+	}
 }
 
 func (lg *Language) NumOrd(digits string, originalWord string) string {
-	if strings.HasSuffix(originalWord, "o") {
-		return fmt.Sprintf("%sº", digits)
+	switch lg.LangCode {
+	case English:
+		sf := ""
+		if strings.HasSuffix(originalWord, "s") {
+			sf = originalWord[len(originalWord)-3:]
+		} else {
+			sf = originalWord[len(originalWord)-2:]
+		}
+
+		return fmt.Sprintf("%s%s", digits, sf)
+
+	case Spanish:
+
+		if strings.HasSuffix(originalWord, "o") {
+			return fmt.Sprintf("%sº", digits)
+		}
+		return fmt.Sprintf("%sª", digits)
 	}
-	return fmt.Sprintf("%sª", digits)
+
+	return "ERROR"
 }
 
 func (lg *Language) Normalize(word string) string {
-	return word
+	switch lg.LangCode {
+	default:
+		return word
+	}
 }
 
 func (lg *Language) NotNumericWord(word string) bool {

@@ -5,10 +5,9 @@ import (
 )
 
 func main() {
-
 	itn.SetDebug(true)
 
-	processor := itn.NewLanguageES()
+	processor, _ := itn.NewLanguage(itn.Spanish)
 	new_string := processor.Alpha2Digit("uno dos quince", false, true, 3)
 	println(new_string)
 }
