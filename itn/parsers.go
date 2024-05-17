@@ -121,6 +121,7 @@ func (w *WordStreamValueParser) push(word string, lookAhead string) bool {
 			if value == 0 {
 				value = 1
 			}
+			logPrintf(">>> WordStreamValueParser.push.condition 3.3: [value] %d [coef] %d", value, coef)
 			w.n000Val = value * coef
 		}
 		w.grpVal = 0
@@ -207,12 +208,12 @@ func (w *WordToDigitParser) close() {
 }
 
 func (w *WordToDigitParser) atStartOfSeq() bool {
-	print(">> WordToDigitParser.atStartOfSeq")
+	logPrintf(">> WordToDigitParser.atStartOfSeq")
 	return w.InFrac && w.FracBuilder.GetValue() == 0 || !w.InFrac && w.IntBuilder.GetValue() == 0
 }
 
 func (w *WordToDigitParser) atStart() bool {
-	print(">> WordToDigitParser.atStart")
+	logPrintf(">> WordToDigitParser.atStart")
 	return !w.Open
 }
 
