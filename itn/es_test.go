@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestAlpha2Digit(t *testing.T) {
+func TestAlpha2DigitES(t *testing.T) {
 	type test struct {
 		input  string
 		output string
@@ -110,7 +110,7 @@ func TestAlpha2Digit(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		processor := NewLanguageES()
+		processor, _ := NewLanguage(Spanish)
 		new_string := processor.Alpha2Digit(tt.input, false, true, 3)
 		if new_string != tt.output {
 			t.Errorf("❌ Expected <%s>, got <%s>", tt.output, new_string)
