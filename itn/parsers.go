@@ -57,16 +57,21 @@ func (w *WordStreamValueParser) groupExpects(word string, update bool) bool {
 func (w *WordStreamValueParser) isCoefAppliable(coef int) bool {
 	logPrintf("+ WordStreamValueParser.isCoefAppliable.coef %d", coef)
 	if w.lang.Simplify_check_coef_appliable {
+		logPrintf(">> WordStreamValueParser.isCoefAppliable.condition 0: [coef] %d", coef)
 		return coef != w.GetValue()
 	}
 
 	if coef > w.GetValue() && (w.GetValue() > 0 || coef >= 100) {
+		logPrintf(">> WordStreamValueParser.isCoefAppliable.condition 1: [coef] %d", coef)
 		return true
 	}
 
 	if coef*1000 <= w.n000Val || coef == 100 && 100 > w.grpVal {
-		return (w.grpVal > 0 || coef == 1000 || coef == 100)
+		logPrintf(">> WordStreamValueParser.isCoefAppliable.condition 2: [coef] %d", coef)
+		return w.grpVal > 0 || coef == 1000 || coef == 100
 	}
+
+	logPrintf(">> WordStreamValueParser.isCoefAppliable.condition 3: [coef] %d", coef)
 
 	return false
 }
@@ -111,7 +116,7 @@ func (w *WordStreamValueParser) push(word string, lookAhead string) bool {
 			return true
 		}
 		if coef < w.n000Val {
-			value := w.n000Val
+			value := w.grpVal
 			if value == 0 {
 				value = 1
 			}
@@ -121,6 +126,7 @@ func (w *WordStreamValueParser) push(word string, lookAhead string) bool {
 			if value == 0 {
 				value = 1
 			}
+			logPrintf(">>> WordStreamValueParser.push.condition 3.3: [value] %d [coef] %d", value, coef)
 			w.n000Val = value * coef
 		}
 		w.grpVal = 0
@@ -207,12 +213,12 @@ func (w *WordToDigitParser) close() {
 }
 
 func (w *WordToDigitParser) atStartOfSeq() bool {
-	print(">> WordToDigitParser.atStartOfSeq")
+	logPrintf(">> WordToDigitParser.atStartOfSeq")
 	return w.InFrac && w.FracBuilder.GetValue() == 0 || !w.InFrac && w.IntBuilder.GetValue() == 0
 }
 
 func (w *WordToDigitParser) atStart() bool {
-	print(">> WordToDigitParser.atStart")
+	logPrintf(">> WordToDigitParser.atStart")
 	return !w.Open
 }
 

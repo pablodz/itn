@@ -27,6 +27,7 @@ type Language struct {
 	Simplify_check_coef_appliable bool              // Optional
 	RadMap                        map[string]string // Optional
 	Composites                    map[string]int    // Optional
+	PtOrdinals                    map[string]string // Only for Portuguese
 }
 
 type RelaxTuple struct {
@@ -36,8 +37,18 @@ type RelaxTuple struct {
 
 func (lg *Language) Ord2Card(word string) string {
 	switch lg.LangCode {
+	case Portuguese:
+		logPrintf(">>>> Ord2Card.0 [word] %s", word)
+		if len(word) < 1 {
+			return ""
+		}
+		ordinal, ok := lg.PtOrdinals[word[:len(word)-1]]
+		if !ok {
+			return ""
+		}
+		return ordinal
 	case English:
-		logPrintf(">>>> Ord2Card.0 %s", word)
+		logPrintf(">>>> Ord2Card.1 %s", word)
 		plurSuff := strings.HasSuffix(word, "ths")
 		singSuff := strings.HasSuffix(word, "th")
 		source := ""
@@ -49,7 +60,7 @@ func (lg *Language) Ord2Card(word string) string {
 			} else if strings.HasSuffix(word, "third") {
 				source = strings.ReplaceAll(word, "third", "three")
 			} else {
-				logPrintf(">>>> Ord2Card.1 %s", word)
+				logPrintf(">>>> Ord2Card.2 %s", word)
 				return ""
 			}
 		} else {
@@ -73,14 +84,13 @@ func (lg *Language) Ord2Card(word string) string {
 		}
 
 		if !containsKey(lg.Numbers, source) {
-			logPrintf(">>>> Ord2Card.2 %s", source)
+			logPrintf(">>>> Ord2Card.3 %s", source)
 			return ""
 		}
 
-		logPrintf(">>>> Ord2Card.3 %s", source)
+		logPrintf(">>>> Ord2Card.4 %s", source)
 		return source
-	case Spanish:
-		return ""
+
 	default:
 		return ""
 	}
@@ -89,6 +99,7 @@ func (lg *Language) Ord2Card(word string) string {
 func (lg *Language) NumOrd(digits string, originalWord string) string {
 	switch lg.LangCode {
 	case English:
+		logPrintf(">>>> NumOrd.0 %s", originalWord)
 		sf := ""
 		if strings.HasSuffix(originalWord, "s") {
 			sf = originalWord[len(originalWord)-3:]
@@ -98,14 +109,16 @@ func (lg *Language) NumOrd(digits string, originalWord string) string {
 
 		return fmt.Sprintf("%s%s", digits, sf)
 
-	case Spanish:
-
+	case Portuguese, Spanish:
+		logPrintf(">>>> NumOrd.1 %s", originalWord)
 		if strings.HasSuffix(originalWord, "o") {
 			return fmt.Sprintf("%sº", digits)
 		}
+
 		return fmt.Sprintf("%sª", digits)
 	}
 
+	logPrintf(">>>> NumOrd.2 ❌ %s", originalWord)
 	return "ERROR"
 }
 
@@ -120,7 +133,12 @@ func (lg *Language) NotNumericWord(word string) bool {
 	return word == "" || word != lg.DecimalSep && !containsKey(lg.Numbers, word) && !contains(lg.Zero, word)
 }
 
-var WORDSEP = regexp.MustCompile(`\s*[\.,;\(\)…\[\]:!\?]+\s*|\n`)
+const UsePTOrdinalsMerger = true
+
+var (
+	WORDSEP = regexp.MustCompile(`\s*[\.,;\(\)…\[\]:!\?]+\s*|\n`)
+	omg     = OrdinalsMerger{}
+)
 
 type segmentAndPunct struct {
 	segment string
@@ -171,12 +189,7 @@ func (lg Language) Alpha2Digit(text string, relaxed bool, signed bool, ordinalTh
 
 	segmentAndPuncts := []segmentAndPunct{}
 	for i, segment := range segments {
-		segmentAndPuncts = append(segmentAndPuncts,
-			segmentAndPunct{
-				segment,
-				punct[i],
-			},
-		)
+		segmentAndPuncts = append(segmentAndPuncts, segmentAndPunct{segment, punct[i]})
 	}
 
 	outSegments := []string{}
@@ -225,6 +238,13 @@ func (lg Language) Alpha2Digit(text string, relaxed bool, signed bool, ordinalTh
 
 	}
 	text = strings.Join(outSegments, "")
+
+	logPrintf(">>> [text] %s", text)
+
+	// Post-Processing
+	if lg.LangCode == Portuguese && UsePTOrdinalsMerger {
+		text = omg.MergeCompoundOrdinalsPT(text)
+	}
 
 	return text
 }

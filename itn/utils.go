@@ -27,3 +27,11 @@ func logPrintf(format string, args ...interface{}) {
 		log.Printf(format, args...)
 	}
 }
+
+func sumInts(ints []int) int {
+	sum := 0
+	for _, i := range ints {
+		sum += i
+	}
+	return sum
+}

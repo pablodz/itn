@@ -234,6 +234,192 @@ func NewLanguage(LangCode LanguageCode) (*Language, error) {
 		maps.Copy(l.Numbers, l.Composites)
 
 		return l, nil
+	case Portuguese:
+
+		l := &Language{
+			LangCode: LangCode,
+			Multipliers: map[string]int{
+				"mil":      1000,
+				"milhar":   1000,
+				"milhares": 1000,
+				"milhao":   1000000,
+				"milhão":   1000000,
+				"milhoes":  1000000,
+				"milhões":  1000000,
+				"bilhao":   1000000000,
+				"bilhão":   1000000000,
+				"bilhoes":  1000000000,
+				"bilhões":  1000000000,
+				"trilhao":  1000000000000,
+				"trilhão":  1000000000000,
+				"trilhoes": 1000000000000,
+				"trilhões": 1000000000000,
+			},
+			Units: map[string]int{
+				"um":        1,
+				"dois":      2,
+				"três":      3,
+				"quatro":    4,
+				"cinco":     5,
+				"seis":      6,
+				"sete":      7,
+				"oito":      8,
+				"nove":      9,
+				"uma":       1,  // optional
+				"duas":      2,  // optional
+				"tres":      3,  // without accent
+				"catorze":   14, // without accent
+				"dezesseis": 16, // without accent
+				"dezessete": 17, // without accent
+				"dezenove":  19, // without accent
+			},
+			STens: map[string]int{
+				"dez":       10,
+				"onze":      11,
+				"doze":      12,
+				"treze":     13,
+				"catorze":   14,
+				"quinze":    15,
+				"dezasseis": 16,
+				"dezassete": 17,
+				"dezoito":   18,
+				"dezanove":  19,
+			},
+			MTens: map[string]int{
+				"vinte":     20,
+				"trinta":    30,
+				"quarenta":  40,
+				"cinquenta": 50,
+				"sessenta":  60,
+				"setenta":   70,
+				"oitenta":   80,
+				"noventa":   90,
+			},
+			MTensWSTens: []string{},
+			Hundred: map[string]int{
+				"cem":          100,
+				"centena":      100,
+				"cento":        100,
+				"centenas":     100,
+				"duzentos":     200,
+				"duzentas":     200,
+				"trezentos":    300,
+				"trezentas":    300,
+				"quatrocentos": 400,
+				"quatrocentas": 400,
+				"quinhentos":   500,
+				"quinhentas":   500,
+				"seiscentos":   600,
+				"seiscentas":   600,
+				"setecentos":   700,
+				"setecentas":   700,
+				"oitocentos":   800,
+				"oitocentas":   800,
+				"novecentos":   900,
+				"novecentas":   900,
+			},
+			Sign: map[string]string{
+				"mais":  "+",
+				"menos": "-",
+			},
+			Zero: []string{
+				"zero",
+			},
+			DecimalSep: "vírgula",
+			DecimalSYM: ",",
+			AndNums: []string{
+				"um",
+				"uma",
+				"duas",
+				"dois",
+				"três",
+				"tres",
+				"quatro",
+				"cinco",
+				"seis",
+				"sete",
+				"oito",
+				"nove",
+				"dez",
+				"onze",
+				"doze",
+				"treze",
+				"quatorze",
+				"catorze",
+				"quinze",
+				"dezasseis",
+				"dezesseis",
+				"dezassete",
+				"dezessete",
+				"dezoito",
+				"dezanove",
+				"dezenove",
+				"vinte",
+				"trinta",
+				"quarenta",
+				"cinquenta",
+				"sessenta",
+				"setenta",
+				"oitenta",
+				"noventa",
+				"cem",
+				"duzentos",
+				"trezentos",
+				"quatrocentos",
+				"quinhentos",
+				"seiscentos",
+				"setecentos",
+				"oitocentos",
+				"novecentos",
+			},
+
+			And: "e",
+			NeverIfAlone: []string{
+				"um",
+				"uma",
+			},
+			Relaxed:    map[string]RelaxTuple{},
+			Composites: map[string]int{},
+			PtOrdinals: map[string]string{
+				"primeir":        "um",
+				"segund":         "dois",
+				"terceir":        "três",
+				"quart":          "quatro",
+				"quint":          "cinco",
+				"sext":           "seis",
+				"sétim":          "sete",
+				"oitav":          "oito",
+				"non":            "nove",
+				"décim":          "dez",
+				"vigésim":        "vinte",
+				"trigésim":       "trinta",
+				"quadragésim":    "quarenta",
+				"quinquagésim":   "cinquenta",
+				"sexagésim":      "sessenta",
+				"septagésim":     "setenta",
+				"octagésim":      "oitenta",
+				"nonagésim":      "noventa",
+				"centésim":       "cem",
+				"ducentésim":     "cem",
+				"trecentésim":    "cem",
+				"quadrigentésim": "cem",
+				"quingentésim":   "cem",
+				"sexgentésim":    "cem",
+				"setingentésim":  "cem",
+				"octigentésim":   "cem",
+				"nonigentésim":   "mil",
+				"milionésim":     "milhão",
+			},
+		}
+
+		l.Numbers = maps.Clone(l.Multipliers)
+		maps.Copy(l.Numbers, l.Units)
+		maps.Copy(l.Numbers, l.STens)
+		maps.Copy(l.Numbers, l.MTens)
+		maps.Copy(l.Numbers, l.Hundred)
+		maps.Copy(l.Numbers, l.Composites)
+
+		return l, nil
 
 	default:
 		return nil, fmt.Errorf("Language not implemented")
