@@ -378,13 +378,7 @@ func NewLanguage(LangCode LanguageCode) (*Language, error) {
 				"um",
 				"uma",
 			},
-			Relaxed: map[string]RelaxTuple{},
-			RadMap: map[string]string{
-				"fif":   "five",
-				"eigh":  "eight",
-				"nin":   "nine",
-				"twelf": "twelve",
-			},
+			Relaxed:    map[string]RelaxTuple{},
 			Composites: map[string]int{},
 			PtOrdinals: map[string]string{
 				"primeir":        "um",

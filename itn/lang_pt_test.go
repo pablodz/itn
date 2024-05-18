@@ -127,6 +127,26 @@ func TestAlpha2DigitPT(t *testing.T) {
 			input:  "em dezessete de janeiro de mil novecentos e noventa",
 			output: "em 17 de janeiro de 1990",
 		},
+	}
+
+	for _, tt := range tests {
+		processor, _ := NewLanguage(Portuguese)
+		new_string := processor.Alpha2Digit(tt.input, false, true, 3)
+		if new_string != tt.output {
+			t.Errorf("❌ Expected <%s>, got <%s>", tt.output, new_string)
+		} else {
+			t.Logf("✅ Expected <%s>, got <%s>", tt.output, new_string)
+		}
+	}
+}
+
+func TestAlpha2DigitPTFalse(t *testing.T) {
+	type test struct {
+		input  string
+		output string
+	}
+
+	tests := []test{
 		{
 			input:  "quanto é dezenove menos três? É dezesseis",
 			output: "quanto é 19 menos 3? É 16",
@@ -135,7 +155,7 @@ func TestAlpha2DigitPT(t *testing.T) {
 
 	for _, tt := range tests {
 		processor, _ := NewLanguage(Portuguese)
-		new_string := processor.Alpha2Digit(tt.input, false, true, 3)
+		new_string := processor.Alpha2Digit(tt.input, true, false, 3)
 		if new_string != tt.output {
 			t.Errorf("❌ Expected <%s>, got <%s>", tt.output, new_string)
 		} else {

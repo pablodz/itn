@@ -9,23 +9,6 @@ import (
 
 var SegmentBreak = regexp.MustCompile(`\s*[\.,;\(\)…\[\]:!\?]+\s*`)
 
-type SubRegex struct {
-	regex       *regexp.Regexp
-	replacement string
-}
-
-// Initialize the regexes and replacements
-var subRegexes = []SubRegex{
-	{regexp.MustCompile(`1\s`), "um "},
-	{regexp.MustCompile(`2\s`), "dois"},
-	{regexp.MustCompile(`\b1[º°]\b`), "primeiro"},
-	{regexp.MustCompile(`\b2[º°]\b`), "segundo"},
-	{regexp.MustCompile(`\b3[º°]\b`), "terceiro"},
-	{regexp.MustCompile(`\b1ª\b`), "primeira"},
-	{regexp.MustCompile(`\b2ª\b`), "segunda"},
-	{regexp.MustCompile(`\b3ª\b`), "terceira"},
-}
-
 type OrdinalsMerger struct{}
 
 func NewOrdinalsMerger() *OrdinalsMerger {
@@ -41,15 +24,13 @@ func (om *OrdinalsMerger) MergeCompoundOrdinalsPT(text string) string {
 
 	segmentAndPuncts := []segmentAndPunct{}
 	for i, segment := range segments {
-		segmentAndPuncts = append(segmentAndPuncts,
-			segmentAndPunct{
-				segment,
-				punct[i],
-			},
-		)
+		segmentAndPuncts = append(segmentAndPuncts, segmentAndPunct{segment, punct[i]})
 	}
 
 	outSegments := []string{}
+	ordinal := 0
+	gender := ""
+
 	for _, sp := range segmentAndPuncts {
 		tokens := []string{}
 		for _, t := range strings.Split(sp.segment, " ") {
@@ -62,26 +43,32 @@ func (om *OrdinalsMerger) MergeCompoundOrdinalsPT(text string) string {
 		tokens2 := []string{}
 		currentIsOrdinal := false
 		seq := []int{}
-		gender := ""
-		ordinal := 0
+
+		logPrintf("> MergeCompoundOrdinalsPT.1.tokens %v [tokens2] %v", tokens, tokens2)
 
 		for pointer < len(tokens) {
 			token := tokens[pointer]
+
 			if om.isOrdinal(token) {
+				logPrintf("> MergeCompoundOrdinalsPT.2.1.token <%s> [tokens2] %v", token, tokens2)
 				currentIsOrdinal = true
 				seq = append(seq, om.getCardinal(token))
 				gender = om.getGender(token)
 			} else {
 				if !currentIsOrdinal {
+					logPrintf("> MergeCompoundOrdinalsPT.4.token %s [tokens2] %v", token, tokens2)
 					tokens2 = append(tokens2, token)
 				} else {
-					for _, s := range seq {
-						ordinal = ordinal + s
-					}
+					logPrintf("> MergeCompoundOrdinalsPT.5.token %s [tokens2] %v", token, tokens2)
+					logPrintf("> MergeCompoundOrdinalsPT.5.seq %v", seq)
+					ordinal = sumInts(seq)
+					logPrintf("> MergeCompoundOrdinalsPT.5.ordinal %d", ordinal)
 					tokens2 = append(tokens2, fmt.Sprintf("%s%s", strconv.Itoa(ordinal), gender))
 					tokens2 = append(tokens2, token)
 					seq = []int{}
 					currentIsOrdinal = false
+					logPrintf("> MergeCompoundOrdinalsPT.5.1.token %s [tokens2] %v", token, tokens2)
+
 				}
 			}
 
@@ -90,9 +77,8 @@ func (om *OrdinalsMerger) MergeCompoundOrdinalsPT(text string) string {
 		}
 
 		if currentIsOrdinal {
-			for _, s := range seq {
-				ordinal = ordinal + s
-			}
+			logPrintf("> MergeCompoundOrdinalsPT.6.seq %v [tokens2] %v", seq, tokens2)
+			ordinal = sumInts(seq)
 			tokens2 = append(tokens2, fmt.Sprintf("%s%s", strconv.Itoa(ordinal), gender))
 		}
 
@@ -101,8 +87,10 @@ func (om *OrdinalsMerger) MergeCompoundOrdinalsPT(text string) string {
 		outSegments = append(outSegments, sp.segment)
 
 	}
+	text = strings.Join(outSegments, "")
+	logPrintf("> MergeCompoundOrdinalsPT.7.text %s", text)
 
-	return strings.Join(outSegments, "")
+	return text
 }
 
 func (om *OrdinalsMerger) isOrdinal(token string) bool {
@@ -126,11 +114,9 @@ func (om *OrdinalsMerger) isOrdinal(token string) bool {
 
 func (om *OrdinalsMerger) getCardinal(token string) int {
 	out := 0
-	token = strings.TrimSpace(token)
-	if len(token) < 2 {
-		return out
-	}
-	numPart := token[:len(token)-1]
+	runes := []rune(token)
+	numPart := string(runes[:len(runes)-1]) // Extract the part of the string before the last character
+	logPrintf(">>>> [getCardinal] token[:-1] %s", numPart)
 	out, err := strconv.Atoi(numPart)
 	if err != nil {
 		switch numPart {
@@ -140,8 +126,11 @@ func (om *OrdinalsMerger) getCardinal(token string) int {
 			out = 2
 		case "terceir":
 			out = 3
+		default:
+			out = 0
 		}
 	}
+	logPrintf(">>>> [getCardinal] %s -> %d", token, out)
 	return out
 }
 
@@ -156,12 +145,34 @@ func (om *OrdinalsMerger) getGender(token string) string {
 	return gender
 }
 
+type SubRegex struct {
+	Pattern     *regexp.Regexp
+	Replacement string
+}
+
+var subRegexes = []SubRegex{
+	{regexp.MustCompile(`1\s`), "um "},
+	{regexp.MustCompile(`2\s`), "dois"},
+	{regexp.MustCompile(`(^|[^a-zA-Z0-9])1[º°]([^a-zA-Z0-9]|$)`), "primeiro"},
+	{regexp.MustCompile(`(^|[^a-zA-Z0-9])2[º°]([^a-zA-Z0-9]|$)`), "segundo"},
+	{regexp.MustCompile(`(^|[^a-zA-Z0-9])3[º°]([^a-zA-Z0-9]|$)`), "terceiro"},
+	{regexp.MustCompile(`(^|[^a-zA-Z0-9])1ª([^a-zA-Z0-9]|$)`), "primeira"},
+	{regexp.MustCompile(`(^|[^a-zA-Z0-9])2ª([^a-zA-Z0-9]|$)`), "segunda"},
+	{regexp.MustCompile(`(^|[^a-zA-Z0-9])3ª([^a-zA-Z0-9]|$)`), "terceira"},
+}
+
 func (om *OrdinalsMerger) text2NumStyle(tokens []string) []string {
+	logPrintf(">>>>>>> [Tokens] --- %v", tokens)
 	for i, token := range tokens {
-		for _, r := range subRegexes {
-			token = r.regex.ReplaceAllString(token, r.replacement)
+		for _, sr := range subRegexes {
+			v := sr.Pattern.ReplaceAllString(token, sr.Replacement)
+			if token != v {
+				logPrintf(">>>>>>>>>>>>>>>>>>>>>>>>> [Tokens] !!![%d] %s -> %s", i, tokens[i], v)
+			}
+			token = v
 		}
 		tokens[i] = token
 	}
+	logPrintf(">>>>>>> [Tokens] --- %v", tokens)
 	return tokens
 }

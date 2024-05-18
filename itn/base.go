@@ -38,7 +38,7 @@ type RelaxTuple struct {
 func (lg *Language) Ord2Card(word string) string {
 	switch lg.LangCode {
 	case Portuguese:
-		logPrintf(">>>> Ord2Card.0 %s", word)
+		logPrintf(">>>> Ord2Card.0 [word] %s", word)
 		if len(word) < 1 {
 			return ""
 		}
