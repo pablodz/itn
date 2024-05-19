@@ -10,12 +10,143 @@ type LanguageCode int
 const (
 	Spanish LanguageCode = iota
 	English
-	French
 	Portuguese
+	French
+	Deutsch
+	Russian
+	Catalan
 )
 
 func NewLanguage(LangCode LanguageCode) (*Language, error) {
 	switch LangCode {
+	case French:
+
+		l := &Language{
+			LangCode: LangCode,
+			Multipliers: map[string]int{
+				"mil":       1000,
+				"mille":     1000,
+				"milles":    1000,
+				"million":   1000000,
+				"millions":  1000000,
+				"milliard":  1000000000,
+				"milliards": 1000000000,
+			},
+			Units: map[string]int{
+				"un":     1,
+				"deux":   2,
+				"trois":  3,
+				"quatre": 4,
+				"cinq":   5,
+				"six":    6,
+				"sept":   7,
+				"huit":   8,
+				"neuf":   9,
+				"une":    1, // optional
+			},
+			STens: map[string]int{
+				"dix":      10,
+				"onze":     11,
+				"douze":    12,
+				"treize":   13,
+				"quatorze": 14,
+				"quinze":   15,
+				"seize":    16,
+				"dix-sept": 17,
+				"dix-huit": 18,
+				"dix-neuf": 19,
+			},
+			MTens: map[string]int{
+				"vingt":        20,
+				"trente":       30,
+				"quarante":     40,
+				"cinquante":    50,
+				"soixante":     60,
+				"septante":     70,
+				"huitante":     80,
+				"nonante":      90,
+				"quatre-vingt": 80, // with hyphen
+				"octante":      80, // with typo
+			},
+			MTensWSTens: []string{
+				"soixante",
+				"quatre-vingt",
+			},
+			Hundred: map[string]int{
+				"cent":  100,
+				"cents": 100,
+			},
+			Sign: map[string]string{
+				"plus":  "+",
+				"moins": "-",
+			},
+			Zero: []string{
+				"zéro",
+			},
+			DecimalSep: "virgule",
+			DecimalSYM: ",",
+			AndNums: []string{
+				"un",
+				"une",
+				"unième",
+				"onze",
+				"onzième",
+			},
+
+			And: "et",
+			NeverIfAlone: []string{
+				"un",
+				"une",
+			},
+			Relaxed: map[string]RelaxTuple{
+				"quatre": {"vingt", "quatre-vingt"},
+			},
+			Composites: map[string]int{},
+			IrrOrd: map[string]RelaxTuple{
+				"premier":  {"un", "1er"},
+				"première": {"un", "1ère"},
+				"second":   {"deux", "2nd"},
+				"seconde":  {"deux", "2nde"},
+			},
+		}
+
+		for k1, v1 := range l.MTens {
+			for k2, v2 := range l.Units {
+				if v2 != 1 {
+					l.Composites[fmt.Sprintf("%s-%s", k1, k2)] = v1 + v2
+				}
+			}
+		}
+
+		for k1, v1 := range l.MTens {
+			for k2, v2 := range map[string]int{"et-un": 1, "et-une": 1} {
+				if v1 > 10 && v2 <= 90 {
+					l.Composites[fmt.Sprintf("%s-%s", k1, k2)] = v1 + v2
+				}
+			}
+		}
+
+		l.Composites["quatre-vingt-un"] = 81
+
+		for k1, v1 := range map[string]int{"soixante": 60, "quatre-vingt": 80} {
+			for k2, v2 := range l.STens {
+				l.Composites[fmt.Sprintf("%s-%s", k1, k2)] = v1 + v2
+			}
+		}
+
+		l.Composites["soixante-et-onze"] = 71
+
+		// deep copy from l.multipliers
+		l.Numbers = maps.Clone(l.Multipliers)
+		maps.Copy(l.Numbers, l.Units)
+		maps.Copy(l.Numbers, l.STens)
+		maps.Copy(l.Numbers, l.MTens)
+		maps.Copy(l.Numbers, l.Hundred)
+		maps.Copy(l.Numbers, l.Composites)
+
+		l.Numbers["quatre-vingts"] = 80
+
+		return l, nil
 	case Spanish:
 		l := &Language{
 			LangCode: LangCode,
@@ -135,7 +266,6 @@ func NewLanguage(LangCode LanguageCode) (*Language, error) {
 		maps.Copy(l.Numbers, l.STens)
 		maps.Copy(l.Numbers, l.MTens)
 		maps.Copy(l.Numbers, l.Hundred)
-		maps.Copy(l.Numbers, l.MTens)
 
 		return l, nil
 

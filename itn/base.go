@@ -28,6 +28,7 @@ type Language struct {
 	RadMap                        map[string]string // Optional
 	Composites                    map[string]int    // Optional
 	PtOrdinals                    map[string]string // Only for Portuguese
+	IrrOrd                        map[string]RelaxTuple
 }
 
 type RelaxTuple struct {
@@ -37,6 +38,41 @@ type RelaxTuple struct {
 
 func (lg *Language) Ord2Card(word string) string {
 	switch lg.LangCode {
+	case French:
+		logPrintf(">>>> Ord2Card.0 [word] %s", word)
+		if containsKey(lg.IrrOrd, word) {
+			logPrintf(">>>> Ord2Card.1 %s", word)
+			return lg.IrrOrd[word].Zero
+		}
+
+		plurSuff := strings.HasSuffix(word, "ièmes")
+		singSuff := strings.HasSuffix(word, "ième")
+		if !(plurSuff || singSuff) {
+			logPrintf(">>>> Ord2Card.2 %s", word)
+			return ""
+		}
+
+		source := ""
+		if plurSuff {
+			source = word[:len(word)-5]
+		} else {
+			source = word[:len(word)-4]
+		}
+
+		if source == "cinqu" {
+			source = "cinq"
+		} else if source == "neuv" {
+			source = "neuf"
+		} else if !containsKey(lg.Numbers, source) {
+			source = source + "e"
+			if !containsKey(lg.Numbers, source) {
+				logPrintf(">>>> Ord2Card.3 %s", source)
+				return ""
+			}
+		}
+		logPrintf(">>>> Ord2Card.4 %s", source)
+		return source
+
 	case Portuguese:
 		logPrintf(">>>> Ord2Card.0 [word] %s", word)
 		if len(word) < 1 {
@@ -98,8 +134,20 @@ func (lg *Language) Ord2Card(word string) string {
 
 func (lg *Language) NumOrd(digits string, originalWord string) string {
 	switch lg.LangCode {
-	case English:
+	case French:
 		logPrintf(">>>> NumOrd.0 %s", originalWord)
+
+		if containsKey(lg.IrrOrd, originalWord) {
+			return lg.IrrOrd[originalWord].One
+		}
+
+		if strings.HasSuffix(originalWord, "e") {
+			return fmt.Sprintf("%s%s", digits, "ème")
+		}
+		return fmt.Sprintf("%s%s", digits, "èmes")
+
+	case English:
+		logPrintf(">>>> NumOrd.1 %s", originalWord)
 		sf := ""
 		if strings.HasSuffix(originalWord, "s") {
 			sf = originalWord[len(originalWord)-3:]
@@ -110,7 +158,7 @@ func (lg *Language) NumOrd(digits string, originalWord string) string {
 		return fmt.Sprintf("%s%s", digits, sf)
 
 	case Portuguese, Spanish:
-		logPrintf(">>>> NumOrd.1 %s", originalWord)
+		logPrintf(">>>> NumOrd.2 %s", originalWord)
 		if strings.HasSuffix(originalWord, "o") {
 			return fmt.Sprintf("%sº", digits)
 		}
@@ -124,6 +172,8 @@ func (lg *Language) NumOrd(digits string, originalWord string) string {
 
 func (lg *Language) Normalize(word string) string {
 	switch lg.LangCode {
+	case French:
+		return strings.ReplaceAll(word, "vingts", "vingt")
 	default:
 		return word
 	}

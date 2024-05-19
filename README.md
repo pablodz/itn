@@ -13,6 +13,9 @@ Check [folder](/examples/)
 ## Supported languages
 
 - ✅ español
+- ✅ inglés
+- ✅ portugués
 - 🌀 francés
-- 🌀 italiano
-- 🌀 portugués
+- 🌀 alemán
+- 🌀 ruso
+- 🌀 Catalan
