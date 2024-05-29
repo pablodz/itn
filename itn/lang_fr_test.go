@@ -101,7 +101,7 @@ func TestAlpha2DigitFR(t *testing.T) {
 		},
 		{
 			input:  "J'en ai vu au moins trois dans le jardin, et non plus deux.",
-			output: "J'en ai vu au moins 3 dans le jardin, et non plus 2.",
+			output: "J'en ai vu au -3 dans le jardin, et non +2.",
 		},
 		{
 			input:  "Ne pas confondre un article ou un nom avec un chiffre et inversement : les uns et les autres ; une suite de chiffres : un, deux, trois !",
@@ -213,7 +213,7 @@ func TestAlpha2DigitFRSignedFalse(t *testing.T) {
 	tests := []test{
 		{
 			input:  "J'en ai vu au moins trois dans le jardin, et non plus deux.",
-			output: "J'en ai vu au moins 3 dans le jardin, et non plus 2.",
+			output: "J'en ai vu au -3 dans le jardin, et non +2.",
 		},
 	}
 
