@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 type Language struct {
@@ -53,10 +54,13 @@ func (lg *Language) Ord2Card(word string) string {
 		}
 
 		source := ""
+		runeCount := utf8.RuneCountInString(word)
 		if plurSuff {
-			source = word[:len(word)-5]
+			source = string([]rune(word)[:runeCount-5])
+			logPrintf(">>>> Ord2Card.3.0.1 %s", source)
 		} else {
-			source = word[:len(word)-4]
+			source = string([]rune(word)[:runeCount-4])
+			logPrintf(">>>> Ord2Card.3.0.2 %s", source)
 		}
 
 		if source == "cinqu" {
@@ -65,8 +69,9 @@ func (lg *Language) Ord2Card(word string) string {
 			source = "neuf"
 		} else if !containsKey(lg.Numbers, source) {
 			source = source + "e"
+			logPrintf(">>>> Ord2Card.3.1 %s", source)
 			if !containsKey(lg.Numbers, source) {
-				logPrintf(">>>> Ord2Card.3 %s", source)
+				logPrintf(">>>> Ord2Card.3.2 %s", source)
 				return ""
 			}
 		}
